@@ -1,0 +1,92 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'dart:io' show Platform;
+
+void main() => runApp(MedicationApp());
+
+class MedicationApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Medication Reminder',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: MedicationHomePage(),
+    );
+  }
+}
+
+class MedicationHomePage extends StatefulWidget {
+  @override
+  _MedicationHomePageState createState() => _MedicationHomePageState();
+}
+
+class _MedicationHomePageState extends State<MedicationHomePage> {
+  FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin;
+
+  @override
+  void initState() {
+    super.initState();
+    initializeNotifications();
+  }
+
+  Future<void> initializeNotifications() async {
+    var initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    
+    late InitializationSettings initializationSettings;
+
+    if (Platform.isIOS) {
+      initializationSettings = InitializationSettings(
+        //iOS: IOSInitializationSettings(),
+        android: initializationSettingsAndroid,
+      );
+    } else {
+      initializationSettings = InitializationSettings(
+        android: initializationSettingsAndroid,
+      );
+    }
+
+    flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+    await flutterLocalNotificationsPlugin!.initialize(initializationSettings);
+  }
+
+  Future<void> _showNotification() async {
+    if (flutterLocalNotificationsPlugin != null) {
+      var androidPlatformChannelSpecifics = AndroidNotificationDetails(
+        'channel_id',
+        'channel_name',
+        importance: Importance.max,
+        priority: Priority.high,
+        enableVibration: true, // Example of named argument usage
+        playSound: true, // Example of named argument usage
+      );
+      
+      var platformChannelSpecifics = NotificationDetails(android: androidPlatformChannelSpecifics);
+
+      await flutterLocalNotificationsPlugin!.show(
+        0,
+        'Medication Reminder',
+        'It\'s time to take your medication!',
+        platformChannelSpecifics,
+        payload: 'Default_Sound',
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Medication Reminder'),
+      ),
+      body: Center(
+        child: ElevatedButton(
+          onPressed: _showNotification,
+          child: Text('Take Medication'),
+        ),
+      ),
+    );
+  }
+}
